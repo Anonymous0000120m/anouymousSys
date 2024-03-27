@@ -1,0 +1,2 @@
+old_folder -> new_folder  
+old_file.txt -> new_file.txt
