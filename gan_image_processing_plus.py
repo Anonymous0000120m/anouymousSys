@@ -5,6 +5,7 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.keras.applications.resnet50 import ResNet50, preprocess_input, decode_predictions
 import csv
+import os
 
 class GANImageProcessing:
     def __init__(self, url):
@@ -34,23 +35,42 @@ class GANImageProcessing:
         decoded_preds = decode_predictions(preds, top=3)[0]
         return decoded_preds
 
-def main(url, output_csv):
+def process_single_image(url, output_csv):
     image_processor = GANImageProcessing(url)
-
-    # Classification
     classification_result = image_processor.classify_image()
-    print("Classification Result:", classification_result)
 
-    # Save classification result to CSV
     with open(output_csv, 'w', newline='') as file:
         writer = csv.writer(file)
         writer.writerow(['Image URL', 'Top Prediction', 'Confidence'])
-        writer.writerow([url, classification_result[0][1], classification_result[0][2]])
+
+        top_prediction = classification_result[0]
+        writer.writerow([url, top_prediction[1], top_prediction[2]])
+
+def process_batch_images(image_urls_file, output_csv):
+    with open(image_urls_file, 'r') as file:
+        image_urls = file.readlines()
+
+    with open(output_csv, 'w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(['Image URL', 'Top Prediction', 'Confidence'])
+
+        for url in image_urls:
+            url = url.strip()
+            image_processor = GANImageProcessing(url)
+            classification_result = image_processor.classify_image()
+            top_prediction = classification_result[0]
+            writer.writerow([url, top_prediction[1], top_prediction[2])
+
+def main(input_param1, input_param2):
+    if os.path.isfile(input_param1):  # Check if input_param1 is a file
+        process_batch_images(input_param1, input_param2)
+    else:
+        process_single_image(input_param1, input_param2)
 
 if __name__ == "__main__":
     if len(sys.argv) < 3:
-        print("Please provide the URL of the image and the output CSV file path as command line arguments.")
+        print("Please provide the URL of the image or the file containing image URLs and the output CSV file path.")
     else:
-        url = sys.argv[1]
-        output_csv = sys.argv[2]
-        main(url, output_csv)
+        input_param1 = sys.argv[1]
+        input_param2 = sys.argv[2]
+        main(input_param1, input_param2)
